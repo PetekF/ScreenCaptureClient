@@ -33,7 +33,7 @@ namespace ScreenCaptureClient
             InitializeComponent();
         }
 
-        private void btnConnect_Click(object sender, RoutedEventArgs e)
+        private async void btnConnect_Click(object sender, RoutedEventArgs e)
         {
             string host = txtHost.Text;
             int port = int.Parse(txtPort.Text);
@@ -61,7 +61,15 @@ namespace ScreenCaptureClient
 
             //Thread clientThread = new Thread(getImage);
             //clientThread.Start();
-            getImage();
+            try
+            {
+                await getImage();
+            }
+            catch(IOException ex)
+            {
+
+            }
+            
 
         }
 
@@ -70,65 +78,69 @@ namespace ScreenCaptureClient
             _client.Close();
             txtConnectionStatus.Text = "Disconnected";
             txtConnectionStatus.Foreground = new SolidColorBrush(Colors.DarkRed);
+            imgScreenCapture.Source = null;
         }
 
-        private void getImage()
+        private async Task getImage()
         {
             // Add while(true)
-
-            byte[] headerLengthBytes = new byte[4];
-            int headerLength;
-            byte[] bytesFrom = new byte[65536];
-            int bytesLeft;
-            MemoryStream messageStream = new MemoryStream();
-
-            _serverStream = _client.GetStream();
-
-            _serverStream.Read(headerLengthBytes, 0, 4);
-
-            headerLength = BitConverter.ToInt32(headerLengthBytes, 0);
-            bytesLeft = headerLength;
-
-
-            while (bytesLeft > 0)
+            while (true)
             {
-                var read = _serverStream.Read(bytesFrom, 0, _client.ReceiveBufferSize);
-                messageStream.Write(bytesFrom, 0, read);
-                bytesLeft -= read;
+                byte[] headerLengthBytes = new byte[4];
+                int headerLength;
+                byte[] bytesFrom = new byte[65536];
+                int bytesLeft;
+                MemoryStream messageStream = new MemoryStream();
+
+                _serverStream = _client.GetStream();
+
+                await _serverStream.ReadAsync(headerLengthBytes, 0, 4);
+
+                headerLength = BitConverter.ToInt32(headerLengthBytes, 0);
+                bytesLeft = headerLength;
+
+
+                while (bytesLeft > 0)
+                {
+                    var read = await _serverStream.ReadAsync(bytesFrom, 0, _client.ReceiveBufferSize);
+                    await messageStream.WriteAsync(bytesFrom, 0, read);
+                    bytesLeft -= read;
+                }
+
+
+                //string hexString = Convert.ToHexString(bytesFrom);
+
+
+                _image = new BitmapImage();
+                messageStream.Position = 0;
+                _image.BeginInit();
+                _image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
+                _image.CacheOption = BitmapCacheOption.OnLoad;
+                _image.UriSource = null;
+                _image.StreamSource = messageStream;
+                _image.EndInit();
+
+
+
+                //_image = new BitmapImage();
+                //using (var mem = new MemoryStream(bytesFrom))
+                //{
+                //    mem.Position = 0;
+                //    _image.BeginInit();
+                //    _image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
+                //    _image.CacheOption = BitmapCacheOption.OnLoad;
+                //    _image.UriSource = null;
+                //    _image.StreamSource = mem;
+                //    _image.EndInit();
+                //}
+
+                imgScreenCapture.Source = _image;
+                //Application.Current.Dispatcher.BeginInvoke(() => showImage());
+
+                //MessageBox.Show(hexString);
+                //MessageBox.Show(Encoding.UTF8.GetString(bytesFrom));
             }
 
-
-            //string hexString = Convert.ToHexString(bytesFrom);
-
-
-            _image = new BitmapImage();
-            messageStream.Position = 0;
-            _image.BeginInit();
-            _image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
-            _image.CacheOption = BitmapCacheOption.OnLoad;
-            _image.UriSource = null;
-            _image.StreamSource = messageStream;
-            _image.EndInit();
-
-
-
-            //_image = new BitmapImage();
-            //using (var mem = new MemoryStream(bytesFrom))
-            //{
-            //    mem.Position = 0;
-            //    _image.BeginInit();
-            //    _image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
-            //    _image.CacheOption = BitmapCacheOption.OnLoad;
-            //    _image.UriSource = null;
-            //    _image.StreamSource = mem;
-            //    _image.EndInit();
-            //}
-
-            imgScreenCapture.Source = _image;
-            //Application.Current.Dispatcher.BeginInvoke(() => showImage());
-
-            //MessageBox.Show(hexString);
-            //MessageBox.Show(Encoding.UTF8.GetString(bytesFrom));
 
         }
 
