@@ -61,7 +61,7 @@ namespace ScreenCaptureClient
             {
                 await getImage();
             }
-            catch(IOException ex)
+            catch(Exception ex)
             {
 
             }
@@ -101,7 +101,9 @@ namespace ScreenCaptureClient
                 }
 
                 _image = new BitmapImage();
+
                 messageStream.Position = 0;
+
                 _image.BeginInit();
                 _image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
                 _image.CacheOption = BitmapCacheOption.OnLoad;
