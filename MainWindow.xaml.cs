@@ -49,8 +49,6 @@ namespace ScreenCaptureClient
                 MessageBox.Show(ex.Message);
                 return;
             }
-            
-            
 
             txtConnectionStatus.Text = "Connected";
             txtConnectionStatus.Foreground = new SolidColorBrush(Colors.DarkGreen);
@@ -59,8 +57,6 @@ namespace ScreenCaptureClient
             _serverStream.Write(requestStream, 0, requestStream.Length);
             _serverStream.Flush();
 
-            //Thread clientThread = new Thread(getImage);
-            //clientThread.Start();
             try
             {
                 await getImage();
@@ -69,8 +65,6 @@ namespace ScreenCaptureClient
             {
 
             }
-            
-
         }
 
         private void btnDisconnect_Click(object sender, RoutedEventArgs e)
@@ -83,7 +77,6 @@ namespace ScreenCaptureClient
 
         private async Task getImage()
         {
-            // Add while(true)
             while (true)
             {
                 byte[] headerLengthBytes = new byte[4];
@@ -107,10 +100,6 @@ namespace ScreenCaptureClient
                     bytesLeft -= read;
                 }
 
-
-                //string hexString = Convert.ToHexString(bytesFrom);
-
-
                 _image = new BitmapImage();
                 messageStream.Position = 0;
                 _image.BeginInit();
@@ -120,28 +109,8 @@ namespace ScreenCaptureClient
                 _image.StreamSource = messageStream;
                 _image.EndInit();
 
-
-
-                //_image = new BitmapImage();
-                //using (var mem = new MemoryStream(bytesFrom))
-                //{
-                //    mem.Position = 0;
-                //    _image.BeginInit();
-                //    _image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
-                //    _image.CacheOption = BitmapCacheOption.OnLoad;
-                //    _image.UriSource = null;
-                //    _image.StreamSource = mem;
-                //    _image.EndInit();
-                //}
-
                 imgScreenCapture.Source = _image;
-                //Application.Current.Dispatcher.BeginInvoke(() => showImage());
-
-                //MessageBox.Show(hexString);
-                //MessageBox.Show(Encoding.UTF8.GetString(bytesFrom));
             }
-
-
         }
 
         private void showImage()
